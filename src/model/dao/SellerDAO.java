@@ -13,7 +13,7 @@ public interface SellerDAO {
 	
 	void update(Seller seller);
 	
-	List<Department> findAll();
+	List<Seller> findAll();
 	
-	Department findById(Integer id);
+	Seller findById(Integer id);
 }
