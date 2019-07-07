@@ -43,8 +43,27 @@ public class SellerDaoJDBC implements SellerDAO {
 
 	@Override
 	public List<Seller> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
+		try {
+			stmt = con.prepareStatement("SELECT seller.*, department.Name as DepName FROM seller INNER JOIN department ON seller.DepartmentId = department.Id ORDER BY Name");
+			rs =  stmt.executeQuery();
+			List<Seller> sellers = new ArrayList<>();
+			
+			while(rs.next()) {
+				Department department = instantiateDepartment(rs);
+				Seller seller = instantiateSeller(rs, department);				
+				sellers.add(seller);				
+			}
+			
+			return sellers;
+		} catch (SQLException e) {
+			throw new DbException("ERROR: " + e.getMessage());
+		} finally {
+			DB.closeConnection(stmt, rs);
+
+		}
 	}
 
 	@Override
@@ -97,26 +116,27 @@ public class SellerDaoJDBC implements SellerDAO {
 		ResultSet rs = null;
 
 		try {
-			stmt = con.prepareStatement("SELECT seller.*, department.Name as DepName FROM seller INNER JOIN department ON seller.DepartmentId = department.Id WHERE DepartmentId=? ORDER BY Name");
+			stmt = con.prepareStatement(
+					"SELECT seller.*, department.Name as DepName FROM seller INNER JOIN department ON seller.DepartmentId = department.Id WHERE DepartmentId=? ORDER BY Name");
 			stmt.setInt(1, department.getId());
 			rs = stmt.executeQuery();
-            List<Seller> sellers = new ArrayList<>();
-            Map<Integer, Department> map = new HashMap<>();
-            
+			List<Seller> sellers = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+
 			while (rs.next()) {
 				Department dep = map.get(rs.getInt("DepartmentId"));
-				if(dep == null) {
-					dep =  instantiateDepartment(rs);
+				if (dep == null) {
+					dep = instantiateDepartment(rs);
 					map.put(rs.getInt("DepartmentId"), dep);
 				}
 				Seller seller = instantiateSeller(rs, dep);
 				sellers.add(seller);
 			}
-			
+
 			return sellers;
 		} catch (SQLException e) {
 			throw new DbException("ERROR: " + e.getMessage());
-		}finally {
+		} finally {
 			DB.closeConnection();
 		}
 	}
