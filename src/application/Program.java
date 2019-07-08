@@ -37,9 +37,13 @@ public class Program {
 		}
 		 
 		*/
-		System.out.println("--- teste numero 4: Seller insert ---");
+		System.out.println("--- teste numero 5: Seller insert ---");
 		Seller seller = new Seller(null, "Joao", "joao@hotmail.com", new Date(), 3000.0, department);
-		sellerDAO.insert(seller);
+		//sellerDAO.insert(seller);
+		
+		System.out.println("--- teste numero 4: Seller insert ---");
+		
+		sellerDAO.delete(4);
 	}
 
 }
