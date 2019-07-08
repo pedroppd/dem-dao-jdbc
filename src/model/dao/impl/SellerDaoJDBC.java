@@ -1,6 +1,7 @@
 package model.dao.impl;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.mysql.jdbc.Statement;
 
 import db.DB;
 import db.DbException;
@@ -25,7 +28,32 @@ public class SellerDaoJDBC implements SellerDAO {
 
 	@Override
 	public void insert(Seller seller) {
-		// TODO Auto-generated method stub
+	PreparedStatement stmt = null;
+	try {
+		stmt = con.prepareStatement("insert into seller (Name, Email, BirthDate, BaseSalary, DepartmentId) values (?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+		stmt.setString(1, seller.getName());
+		stmt.setString(2, seller.getEmail());
+		stmt.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
+		stmt.setDouble(4, seller.getBaseSalary());
+		stmt.setInt(5, seller.getDepartment().getId());
+		
+		int row = stmt.executeUpdate();
+		if(row > 0) {
+			ResultSet rs = stmt.getGeneratedKeys();
+			if(rs.next()) {
+				int id = rs.getInt(1);
+				seller.setId(id);
+			}
+		}
+		else {
+			throw new DbException("ERRO inesperado, nenhuma linha foi afetada! ");
+		}
+	}
+	catch(SQLException e) {
+		throw new DbException("ERROR: "+ e.getMessage());
+	}finally {
+		DB.closeConnection(stmt);
+	}
 
 	}
 
@@ -50,9 +78,13 @@ public class SellerDaoJDBC implements SellerDAO {
 			stmt = con.prepareStatement("SELECT seller.*, department.Name as DepName FROM seller INNER JOIN department ON seller.DepartmentId = department.Id ORDER BY Name");
 			rs =  stmt.executeQuery();
 			List<Seller> sellers = new ArrayList<>();
-			
+			Map<Integer, Department> map = new HashMap<>();
 			while(rs.next()) {
-				Department department = instantiateDepartment(rs);
+				Department department = map.get(rs.getInt("DepartmentId"));
+				if (department == null) {
+					department = instantiateDepartment(rs);
+					map.put(rs.getInt("DepartmentId"), department);
+				}
 				Seller seller = instantiateSeller(rs, department);				
 				sellers.add(seller);				
 			}
